@@ -384,12 +384,6 @@ button_done = ctk.CTkButton(master=root, text="Отобразить", text_color
 label_history = ctk.CTkLabel(master=root, text="История расходов:", text_color="#fff5f0", font=my_font)
 scrollable_frame = ctk.CTkScrollableFrame(master=root, width=420, height=300, border_width=2, border_color="#cd8921",
                                           scrollbar_button_color="#90867e", scrollbar_button_hover_color="#716963")
-# button_add = ctk.CTkButton(master=root, text="Добавить запись", text_color="#fff5f0", font=my_font, width=420,
-#                            command=add_purchase, fg_color="#cd8921", hover_color="#a26c1a")
-# button_delete = ctk.CTkButton(master=root, text="Удалить запись", text_color="#fff5f0", font=my_font, width=420,
-#                               command=delete_purchase, fg_color="#cd8921", hover_color="#a26c1a")
-# button_clear = ctk.CTkButton(master=root, text="Очистить всё", text_color="#fff5f0", font=my_font, width=420,
-#                              command=clear_all, fg_color="#cd8921", hover_color="#a26c1a")
 segmented_button = ctk.CTkSegmentedButton(master=root, text_color="#fff5f0", font=ctk.CTkFont(family="Tahoma", size=40),
                                           command=choose_button, fg_color="#716963", corner_radius=50,
                                           unselected_color="#90867e", unselected_hover_color="#cd8921",
@@ -409,9 +403,6 @@ entry_finish_period.grid(row=1, column=8, columnspan=2, pady=2.5)
 button_done.grid(row=2, column=5, columnspan=5, pady=2.5)
 label_history.grid(row=3, column=5, columnspan=5, pady=2.5)
 scrollable_frame.grid(row=4, rowspan=5, column=5, columnspan=5, pady=2.5)
-# button_add.grid(row=7, column=5, columnspan=5, pady=2.5)
-# button_delete.grid(row=8, column=5, columnspan=5, pady=2.5)
-# button_clear.grid(row=9, column=5, columnspan=5, pady=(2.5, 5))
 segmented_button.grid(row=9, column=5, columnspan=5, pady=(2.5, 5), ipadx=50, ipady=5)
 
 # при запуске приложения нужно отобразить диаграмму и историю для всех трат за весь период
