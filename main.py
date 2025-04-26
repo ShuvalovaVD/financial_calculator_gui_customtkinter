@@ -2,6 +2,7 @@ import json
 import customtkinter as ctk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import seaborn as sns
 
 
 def check_day(s):
@@ -55,8 +56,8 @@ def report_error(error_text):
     dialog_window = ctk.CTkToplevel()
     dialog_window.title("Ошибка")
     dialog_window.geometry("700x100")
-    ctk.CTkLabel(master=dialog_window, text="Ошибка:", font=my_font).pack()
-    ctk.CTkLabel(master=dialog_window, text=error_text, font=my_font).pack()
+    ctk.CTkLabel(master=dialog_window, text="Ошибка:", text_color="red", font=my_font, pady=10).pack()
+    ctk.CTkLabel(master=dialog_window, text=error_text, text_color="#fff5f0", font=my_font, pady=10).pack()
 
 
 def redraw_diagram(labels, values):
@@ -68,9 +69,11 @@ def redraw_diagram(labels, values):
     wedges, texts, autotexts = ax.pie(
         values,
         startangle=90,  # первый сектор начинаем с 90 градусов
-        wedgeprops={"edgecolor": "white", "linewidth": 1},  # клинья между секторами
+        wedgeprops={"edgecolor": "#fff5f0", "linewidth": 1},  # клинья между секторами
         autopct="%.1f%%",  # формат отображения %
-        pctdistance=0.80  # расстояние от центра до % - 80% от радиуса
+        pctdistance=0.80,  # расстояние от центра до % - 80% от радиуса
+        textprops={"color": "#fff5f0"},  # %
+        colors = sns.color_palette('dark')[1:len(values) + 1]
     )
     # убираем подписи
     for text in texts:
@@ -84,7 +87,8 @@ def redraw_diagram(labels, values):
         bbox_to_anchor=(0.5, 0),  # разместить по центру относительно диаграммы и сразу под ней
         ncol=2
     )
-    ax.set_title("Распределение трат по категориям")
+    ax.set_title("Распределение трат по категориям:", color="#fff5f0", fontdict={"fontfamily": "Tahoma",
+                                                                                 "fontsize": 14})
     # настройка отображения
     fig.tight_layout()  # автоматически корректирует отступы, чтобы ничего не накладывалось друг на друга
     canvas.draw()  # отрисовываем canvas
@@ -92,10 +96,8 @@ def redraw_diagram(labels, values):
 
 def redraw_window():
     global scrollable_frame, data, my_font
-    period_info = scrollable_frame.winfo_children()[0].cget("text")
-    for widget in scrollable_frame.winfo_children():
-        widget.destroy()
-    if period_info == "За весь период:":
+    period_info = scrollable_frame.winfo_children()[0].cget("text")[:-1]
+    if period_info == "За весь период":
         start_period = finish_period = None
     elif period_info[:15] == "За период после":
         start_period, finish_period = period_info[16:], None
@@ -107,24 +109,27 @@ def redraw_window():
     for widget in scrollable_frame.winfo_children():
         widget.destroy()
 
-    ctk.CTkLabel(master=scrollable_frame, text=period_info, font=my_font).pack()
+    ctk.CTkLabel(master=scrollable_frame, text=period_info + ":", text_color="#fff5f0", font=my_font).pack()
     labels, values = [], []
     pos = 1
     for category, info in data.items():
         total_price = 0
+        flag_category = False
         for day, purchase, price in info:
             if check_day_in_period(day, start_period, finish_period):
                 total_price += price
-                if pos == 1:
-                    ctk.CTkLabel(master=scrollable_frame, text=f"{category}:", font=my_font).pack()
+                if not flag_category:
+                    ctk.CTkLabel(master=scrollable_frame, text=f"{category}:", text_color="#fff5f0",
+                                 font=my_font).pack()
+                    flag_category = True
                 ctk.CTkLabel(master=scrollable_frame, text=f"{pos}. {day} - {purchase} - {price}р.",
-                             font=my_font).pack()
+                             text_color="#fff5f0", font=my_font).pack()
                 pos += 1
         if total_price > 0:
             labels.append(category)
             values.append(total_price)
     if labels == values == []:
-        ctk.CTkLabel(master=scrollable_frame, text="Нет трат", font=my_font).pack()
+        ctk.CTkLabel(master=scrollable_frame, text="Нет трат", text_color="#fff5f0", font=my_font).pack()
         labels = ["Ничего"]
         values = [100]
 
@@ -194,25 +199,30 @@ def add_purchase():
             report_error("Цена должна быть целым положительным числом")
             return
 
-        data[category].append([day, purchase, price])
+        data[category].append([day, purchase, int(price)])
 
         redraw_window()
 
-    label_add = ctk.CTkLabel(master=dialog_window, text="Данные о записи:", font=my_font)
+    label_add = ctk.CTkLabel(master=dialog_window, text="Данные о записи:", text_color="#fff5f0", font=my_font)
     combobox_category = ctk.CTkComboBox(master=dialog_window, values=["Еда", "Жильё", "Одежда", "Проезд", "Здоровье",
-                                        "Развлечения", "Быт", "Прочее"], font=my_font, state="readonly")
+                                        "Развлечения", "Быт", "Прочее"], font=my_font, state="readonly",
+                                        text_color="#fff5f0", dropdown_font=("Tahoma", 12),
+                                        dropdown_text_color="#fff5f0", border_color="#cd8921", button_color="#cd8921",
+                                        dropdown_hover_color="#cd8921")
     combobox_category.set("Еда")
-    label_day = ctk.CTkLabel(master=dialog_window, text="День:", font=my_font)
-    entry_day = ctk.CTkEntry(master=dialog_window, placeholder_text="дд.мм.гггг", font=my_font, justify="center",
-                             width=200)
-    label_puchase = ctk.CTkLabel(master=dialog_window, text="Покупка:", font=my_font)
-    entry_purchase = ctk.CTkEntry(master=dialog_window, placeholder_text="что оплачено", font=my_font, justify="center",
-                                  width=200)
-    label_price = ctk.CTkLabel(master=dialog_window, text="Цена:", font=my_font)
-    entry_price = ctk.CTkEntry(master=dialog_window, placeholder_text="в рублях", justify="center", width=200,
-                               font=my_font)
-    button_add = ctk.CTkButton(master=dialog_window, text="Добавить", font=my_font, command=add_purchase_loc,
-                                   width=320)
+    label_day = ctk.CTkLabel(master=dialog_window, text="День:", text_color="#fff5f0", font=my_font)
+    entry_day = ctk.CTkEntry(master=dialog_window, placeholder_text="дд.мм.гггг", placeholder_text_color="#c1b6ac",
+                             text_color="#fff5f0", font=my_font, justify="center", width=200,
+                             border_color="#cd8921")
+    label_puchase = ctk.CTkLabel(master=dialog_window, text="Покупка:", text_color="#fff5f0", font=my_font)
+    entry_purchase = ctk.CTkEntry(master=dialog_window, placeholder_text="что оплачено",
+                                  placeholder_text_color="#c1b6ac", text_color="#fff5f0", font=my_font,
+                                  justify="center", width=200, border_color="#cd8921")
+    label_price = ctk.CTkLabel(master=dialog_window, text="Цена:", text_color="#fff5f0", font=my_font)
+    entry_price = ctk.CTkEntry(master=dialog_window, placeholder_text="в рублях", placeholder_text_color="#c1b6ac",
+                               text_color="#fff5f0", justify="center", width=200, font=my_font, border_color="#cd8921")
+    button_add = ctk.CTkButton(master=dialog_window, text="Добавить", text_color="#fff5f0", font=my_font, width=320,
+                               command=add_purchase_loc, fg_color="#cd8921", hover_color="#a26c1a")
 
     rows, columns = 5, 3
     for i in range(rows):
@@ -241,7 +251,7 @@ def delete_purchase():
         nonlocal entry_delete
         answer = entry_delete.get()
         if not answer.isdigit():
-            report_error("Вы ввели что-то отличное от целого числа")
+            report_error("Вы ввели что-то отличное от целого неотрицательного числа")
             return
 
         category = None
@@ -263,9 +273,11 @@ def delete_purchase():
 
         redraw_window()
 
-    label_delete = ctk.CTkLabel(master=dialog_window, text="Номер записи:", font=my_font)
-    entry_delete = ctk.CTkEntry(master=dialog_window, font=my_font, justify="center")
-    button_delete = ctk.CTkButton(master=dialog_window, text="Удалить", font=my_font, command=delete_purchase_loc)
+    label_delete = ctk.CTkLabel(master=dialog_window, text="Номер записи:", text_color="#fff5f0", font=my_font)
+    entry_delete = ctk.CTkEntry(master=dialog_window, font=my_font, justify="center", text_color="#fff5f0",
+                                border_color="#cd8921")
+    button_delete = ctk.CTkButton(master=dialog_window, text="Удалить", text_color="#fff5f0", font=my_font,
+                                  command=delete_purchase_loc, fg_color="#cd8921", hover_color="#a26c1a")
     rows, columns = 3, 1
     for i in range(rows):
         dialog_window.rowconfigure(index=i, weight=1)
@@ -280,21 +292,21 @@ def clear_all():
     global my_font
     dialog_window = ctk.CTkToplevel()
     dialog_window.title("Очистить всё")
-    dialog_window.geometry("300x200")
+    dialog_window.geometry("400x200")
 
     def answer_yes():
         global scrollable_frame, data, my_font
-        period_info = scrollable_frame.winfo_children()[0].cget("text")
+        period_info = scrollable_frame.winfo_children()[0].cget("text")[:-1]
         for widget in scrollable_frame.winfo_children():
             widget.destroy()
-        if period_info == "За весь период:":
+        if period_info == "За весь период":
             start_period = finish_period = None
         elif period_info[:15] == "За период после":
-            start_period, finish_period = period_info[16:-1], None
+            start_period, finish_period = period_info[16:], None
         elif period_info[:12] == "За период до":
-            start_period, finish_period = None, period_info[13:-1]
+            start_period, finish_period = None, period_info[13:]
         else:
-            start_period, finish_period = period_info[10:-1].split(" - ")
+            start_period, finish_period = period_info[10:].split(" - ")
 
         for category, info in data.items():
             elems_to_del = []
@@ -304,8 +316,8 @@ def clear_all():
             for elem in elems_to_del:
                 data[category].remove(elem)
 
-        ctk.CTkLabel(master=scrollable_frame, text=period_info, font=my_font).pack()
-        ctk.CTkLabel(master=scrollable_frame, text="Нет трат", font=my_font).pack()
+        ctk.CTkLabel(master=scrollable_frame, text=period_info + ":", text_color="#fff5f0", font=my_font).pack()
+        ctk.CTkLabel(master=scrollable_frame, text="Нет трат", text_color="#fff5f0", font=my_font).pack()
         redraw_diagram(["Ничего"], [100])
         dialog_window.destroy()
 
@@ -313,9 +325,12 @@ def clear_all():
         dialog_window.destroy()
 
     label_clear = ctk.CTkLabel(master=dialog_window,
-                               text="Уверены, что хотите\nудалить все записи\nза указанный период?", font=my_font)
-    button_yes = ctk.CTkButton(master=dialog_window, text="Да", font=my_font, command=answer_yes)
-    button_no = ctk.CTkButton(master=dialog_window, text="Нет", font=my_font, command=answer_no)
+                               text="Уверены, что хотите\nудалить все записи\nза указанный период?",
+                               text_color="#fff5f0", font=my_font)
+    button_yes = ctk.CTkButton(master=dialog_window, text="Да", text_color="#fff5f0", font=my_font, command=answer_yes,
+                               fg_color="#cd8921", hover_color="#a26c1a")
+    button_no = ctk.CTkButton(master=dialog_window, text="Нет", text_color="#fff5f0", font=my_font, command=answer_no,
+                              fg_color="#cd8921", hover_color="#a26c1a")
     rows, columns = 2, 2
     for i in range(rows):
         dialog_window.rowconfigure(index=i, weight=1)
@@ -324,6 +339,21 @@ def clear_all():
     label_clear.grid(row=0, column=0, columnspan=2)
     button_yes.grid(row=1, column=0)
     button_no.grid(row=1, column=1)
+
+
+def choose_button(value):
+    global segmented_button
+    # взлом класса CTkSegmentedButton для изменения поведения сегментированной кнопки
+    # по умолчанию она ведёт себя как переключатель, а мне нужны три самостоятельные кнопки
+    segmented_button._unselect_button_by_value(value)
+    segmented_button._current_value = ""
+
+    if value == "+":
+        add_purchase()
+    elif value == "-":
+        delete_purchase()
+    elif value == "x":
+        clear_all()
 
 
 # перед началом работы приложения загружаем данные
@@ -339,20 +369,31 @@ ctk.set_default_color_theme("green")
 root = ctk.CTk()
 root.title("Финансовый калькулятор")
 root.geometry("1000x600")
-my_font = ctk.CTkFont(family="Roboto", size=20)
+my_font = ctk.CTkFont(family="Tahoma", size=20)
 
 # виджеты
 frame_for_diagram = ctk.CTkFrame(master=root)  # рамка для диаграммы
-label_period = ctk.CTkLabel(master=root, text="Период:", font=my_font)
-entry_start_period = ctk.CTkEntry(master=root, placeholder_text="дд.мм.гггг", font=my_font, justify="center")
-label_dash = ctk.CTkLabel(master=root, text="-", font=my_font)
-entry_finish_period = ctk.CTkEntry(master=root, placeholder_text="дд.мм.гггг", font=my_font, justify="center")
-button_done = ctk.CTkButton(master=root, text="Отобразить", font=my_font, width=420, command=display)
-label_history = ctk.CTkLabel(master=root, text="История расходов:", font=my_font)
-scrollable_frame = ctk.CTkScrollableFrame(master=root, width=420)
-button_add = ctk.CTkButton(master=root, text="Добавить запись", font=my_font, width=420, command=add_purchase)
-button_delete = ctk.CTkButton(master=root, text="Удалить запись", font=my_font, width=420, command=delete_purchase)
-button_clear = ctk.CTkButton(master=root, text="Очистить всё", font=my_font, width=420, command=clear_all)
+label_period = ctk.CTkLabel(master=root, text="Период:", text_color="#fff5f0", font=my_font)
+entry_start_period = ctk.CTkEntry(master=root, placeholder_text="дд.мм.гггг", placeholder_text_color="#c1b6ac",
+                                  text_color="#fff5f0", font=my_font, justify="center", border_color="#cd8921")
+label_dash = ctk.CTkLabel(master=root, text="-", text_color="#fff5f0", font=my_font)
+entry_finish_period = ctk.CTkEntry(master=root, placeholder_text="дд.мм.гггг", placeholder_text_color="#c1b6ac",
+                                   text_color="#fff5f0", font=my_font, justify="center", border_color="#cd8921")
+button_done = ctk.CTkButton(master=root, text="Отобразить", text_color="#fff5f0", font=my_font, width=420,
+                            command=display, fg_color="#cd8921", hover_color="#a26c1a")
+label_history = ctk.CTkLabel(master=root, text="История расходов:", text_color="#fff5f0", font=my_font)
+scrollable_frame = ctk.CTkScrollableFrame(master=root, width=420, height=300, border_width=2, border_color="#cd8921",
+                                          scrollbar_button_color="#90867e", scrollbar_button_hover_color="#716963")
+# button_add = ctk.CTkButton(master=root, text="Добавить запись", text_color="#fff5f0", font=my_font, width=420,
+#                            command=add_purchase, fg_color="#cd8921", hover_color="#a26c1a")
+# button_delete = ctk.CTkButton(master=root, text="Удалить запись", text_color="#fff5f0", font=my_font, width=420,
+#                               command=delete_purchase, fg_color="#cd8921", hover_color="#a26c1a")
+# button_clear = ctk.CTkButton(master=root, text="Очистить всё", text_color="#fff5f0", font=my_font, width=420,
+#                              command=clear_all, fg_color="#cd8921", hover_color="#a26c1a")
+segmented_button = ctk.CTkSegmentedButton(master=root, text_color="#fff5f0", font=ctk.CTkFont(family="Tahoma", size=40),
+                                          command=choose_button, fg_color="#716963", corner_radius=50,
+                                          unselected_color="#90867e", unselected_hover_color="#cd8921",
+                                          selected_color="#cd8921", selected_hover_color="#a26c1a", values=["+", "-", "x"])
 
 # глобальная сетка
 rows, columns = 10, 10
@@ -361,16 +402,17 @@ for i in range(rows):
 for i in range(columns):
     root.columnconfigure(index=i, weight=1)
 frame_for_diagram.grid(row=0, rowspan=10, column=0, columnspan=5)
-label_period.grid(row=0, column=5, columnspan=5)
-entry_start_period.grid(row=1, column=5, columnspan=2)
-label_dash.grid(row=1, column=7)
-entry_finish_period.grid(row=1, column=8, columnspan=2)
-button_done.grid(row=2, column=5, columnspan=5)
-label_history.grid(row=3, column=5, columnspan=5)
-scrollable_frame.grid(row=4, rowspan=3, column=5, columnspan=5)
-button_add.grid(row=7, column=5, columnspan=5)
-button_delete.grid(row=8, column=5, columnspan=5)
-button_clear.grid(row=9, column=5, columnspan=5)
+label_period.grid(row=0, column=5, columnspan=5, pady=(30, 2.5))
+entry_start_period.grid(row=1, column=5, columnspan=2, pady=2.5)
+label_dash.grid(row=1, column=7, pady=2.5)
+entry_finish_period.grid(row=1, column=8, columnspan=2, pady=2.5)
+button_done.grid(row=2, column=5, columnspan=5, pady=2.5)
+label_history.grid(row=3, column=5, columnspan=5, pady=2.5)
+scrollable_frame.grid(row=4, rowspan=5, column=5, columnspan=5, pady=2.5)
+# button_add.grid(row=7, column=5, columnspan=5, pady=2.5)
+# button_delete.grid(row=8, column=5, columnspan=5, pady=2.5)
+# button_clear.grid(row=9, column=5, columnspan=5, pady=(2.5, 5))
+segmented_button.grid(row=9, column=5, columnspan=5, pady=(2.5, 5), ipadx=50, ipady=5)
 
 # при запуске приложения нужно отобразить диаграмму и историю для всех трат за весь период
 # => собираем данные для диаграммы за весь период
@@ -388,7 +430,7 @@ if labels == values == []:  # если в data.json нет никаких дан
     values = [100]
 
 # создание фигуры и графика
-fig = plt.figure(figsize=(5, 5.8))
+fig = plt.figure(figsize=(5, 5.8), facecolor="#242424")
 ax = fig.add_subplot(111)
 
 # встраиваем фигуру fig в рамку frame с помощью canvas
@@ -398,18 +440,18 @@ canvas.get_tk_widget().pack(fill="both", expand=True)
 redraw_diagram(labels, values)
 
 # на старте отображаем загруженную историю трат за весь период
-ctk.CTkLabel(master=scrollable_frame, text="За весь период:", font=my_font).pack()
+ctk.CTkLabel(master=scrollable_frame, text="За весь период:", text_color="#fff5f0", font=my_font).pack()
 if labels == ["Ничего"]:
-    ctk.CTkLabel(master=scrollable_frame, text="Нет трат", font=my_font).pack()
+    ctk.CTkLabel(master=scrollable_frame, text="Нет трат", text_color="#fff5f0", font=my_font).pack()
 else:
     pos = 1
     for category, info in data.items():
         if len(info) == 0:
             continue
-        ctk.CTkLabel(master=scrollable_frame, text=f"{category}:", font=my_font).pack()
+        ctk.CTkLabel(master=scrollable_frame, text=f"{category}:", text_color="#fff5f0", font=my_font).pack()
         for day, purchase, price in info:
             ctk.CTkLabel(master=scrollable_frame,
-                         text=f"{pos}. {day} - {purchase} - {price}р.", font=my_font).pack()
+                         text=f"{pos}. {day} - {purchase} - {price}р.", text_color="#fff5f0", font=my_font).pack()
             pos += 1
 
 plt.close()  # завершает процессы, связанные с графиками
